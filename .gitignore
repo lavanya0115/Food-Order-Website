@@ -1,5 +1,22 @@
-node_modules
-dist
+# dependencies
+node_modules/
+
+# build
+dist/
+
+# vite cache
+.vite/
+
+# environment
 .env
 .env.local
+
+# logs
+npm-debug.log*
+
+# VS Code
+.vscode/
+
+# OS files
 .DS_Store
+Thumbs.db
