@@ -1,12 +1,14 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet, Link, useNavigate } from "react-router-dom";
 import { LogIn, ShoppingBag, Clock3, MapPin, Phone } from "lucide-react";
 import AppLogo from "../common/AppLogo";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function PublicLayout() {
   const { count } = useCart();
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, signOut } = useAuth();
+  const navigate = useNavigate();
 
   console.log("user", user);
   console.log("role", role);
@@ -26,13 +28,21 @@ export default function PublicLayout() {
     );
   }
 
-  const accountPath = !user
-    ? "/login"
-    : role === "customer"
-      ? "/login"
-      : role
-        ? `/${role.replace("_", "-")}`
-        : "/login";
+  async function handleLogout() {
+    try {
+      await signOut();
+
+      toast.success("Logged out successfully");
+
+      navigate("/login", {
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Logout failed:", error);
+
+      toast.error("Unable to logout. Please try again.");
+    }
+  }
 
   return (
     <>
@@ -60,34 +70,84 @@ export default function PublicLayout() {
               Basket {count ? `(${count})` : ""}
             </Link>
 
-            <Link
-              className="btn-primary hidden sm:inline-flex"
-              to={accountPath}
-            >
-              <LogIn size={18} />
-              {user ? "Account" : "Login"}
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  className="btn-primary hidden sm:inline-flex"
+                  to="/profile"
+                >
+                  Account
+                </Link>
+
+                <button
+                  type="button"
+                  className="btn-secondary hidden sm:inline-flex"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link className="btn-primary hidden sm:inline-flex" to="/login">
+                <LogIn size={18} />
+                Login
+              </Link>
+            )}
           </div>
         </div>
       </header>
-
       <Outlet />
 
-      <footer className="border-t bg-white">
-        <div className="container-ui grid gap-5 py-7 md:grid-cols-2">
-          <AppLogo />
+      <footer className="border-t border-stone-200 bg-white">
+        <div className="container-ui py-6">
+          <div className="grid gap-6 md:grid-cols-2 md:items-start">
+            {/* Logo */}
+            <div>
+              <AppLogo />
 
-          <p className="text-sm text-stone-600">
-            <MapPin /> 12 Woodlands Square Tower 1, #06-64, Singapore 737715
-            <Phone />
-            <span>+65 62599810 , +65 63965563</span>
-          </p>
+              <p className="mt-4 text-xs text-stone-400">
+                © {new Date().getFullYear()} RKJ THONDAMANS FOOD PTE LTD. All
+                rights reserved. Made with ❤️ by Lavya
+              </p>
+            </div>
 
-          <p className="text-sm text-stone-600">
-            {/* <div className="py-3 text-center text-xs text-stone-400"> */}©
-            made with ❤️. All rights reserved by Lavya.
-            {/* </div> */}
-          </p>
+            {/* Contact Information */}
+            <div className="space-y-3 md:justify-self-end">
+              {/* Address */}
+              <div className="flex items-start gap-3 text-sm text-stone-600">
+                <MapPin size={18} className="mt-0.5 shrink-0 text-rose-700" />
+
+                <span className="leading-6">
+                  12 Woodlands Square Tower 1,
+                  <br />
+                  #06-64, Singapore 737715
+                </span>
+              </div>
+
+              {/* Phone Numbers */}
+              <div className="flex items-center gap-3 text-sm text-stone-600">
+                <Phone size={18} className="shrink-0 text-rose-700" />
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <a
+                    href="tel:+6562599810"
+                    className="transition hover:text-rose-700"
+                  >
+                    +65 6259 9810
+                  </a>
+
+                  <span className="text-stone-300">|</span>
+
+                  <a
+                    href="tel:+6563965563"
+                    className="transition hover:text-rose-700"
+                  >
+                    +65 6396 5563
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </footer>
     </>

@@ -1,15 +1,6 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import {
-  supabase,
-  isSupabaseConfigured,
-} from "../lib/supabase";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
 const C = createContext(null);
 
@@ -54,25 +45,36 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function signOut() {
+    if (!supabase) return;
+
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      throw error;
+    }
+
+    setSession(null);
+    setProfile(null);
+    setRole(null);
+    setLoading(false);
+  }
+
   useEffect(() => {
     if (!supabase) {
       setLoading(false);
       return;
     }
 
-    supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        hydrate(data.session);
-      });
+    supabase.auth.getSession().then(({ data }) => {
+      hydrate(data.session);
+    });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        hydrate(session);
-      }
-    );
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      hydrate(session);
+    });
 
     return () => {
       subscription.unsubscribe();
@@ -87,17 +89,13 @@ export function AuthProvider({ children }) {
       role,
       loading,
       configured: isSupabaseConfigured,
-      signOut: () => supabase?.auth.signOut(),
+      signOut,
       refresh: () => hydrate(session),
     }),
-    [session, profile, role, loading]
+    [session, profile, role, loading],
   );
 
-  return (
-    <C.Provider value={value}>
-      {children}
-    </C.Provider>
-  );
+  return <C.Provider value={value}>{children}</C.Provider>;
 }
 
 export function useAuth() {
